@@ -16,31 +16,39 @@ INSPECT_ROBOT_CFG = ArticulationCfg(
             retain_accelerations=True,
             solver_velocity_iteration_count=16,
             solver_position_iteration_count=4,
-            max_depenetration_velocity=5.0,
+            max_depenetration_velocity=0.1,
         )
         ,
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
             enabled_self_collisions=False, solver_position_iteration_count=4, solver_velocity_iteration_count=2
         ),
-        collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.02, rest_offset=0.0)
+        collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.0002, rest_offset=0.0)
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         joint_pos={
-            "rb_wheel" :0.0,
-            "rf_wheel" :0.0,
-            "lb_wheel" :0.0,
-            "lf_wheel" :0.0
+            "rb_joint" :0.0,
+            "rf_joint" :0.0,
+            "lb_joint" :0.0,
+            "lf_joint" :0.0,
+            "lift_joint1" :0.0,
+            "lift_joint2" :0.0,
+            "lift_joint3" :0.0,
+            "camera_joint1" :0.0,
+            "camera_joint2" :0.0,
+            "camera_joint3" :0.0,
+            "liftt_assist_joint" :0.0,
+            
         },
     ),
     actuators={
         "wheels" : ImplicitActuatorCfg(
             joint_names_expr=["rb_joint", "lf_joint", "rf_joint", "lb_joint"],
-            effort_limit=3402823466385288598117041834845.0,
-            velocity_limit= 10000000.0,
+            effort_limit=34045.0,
+            velocity_limit= 100.0,
             stiffness=0,
             damping=1e5,
-        )
-        "lift_joint" : 
+        ),
+        
     },
     soft_joint_pos_limit_factor=1.0,
 )

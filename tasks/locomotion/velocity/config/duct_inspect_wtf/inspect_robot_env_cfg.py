@@ -17,7 +17,7 @@ from omni.isaac.lab.sensors import ContactSensorCfg, patterns, CameraCfg
 class InspectCameraEnvCfg(InspectRobotbaseSceneCfg):
     camera=CameraCfg(
         # prim_path="{ENV_REGEX_NS}/Robot/base_link/Camera1",
-        prim_path="{ENV_REGEX_NS}/Robot/base_link/Camera/Camera1",
+        prim_path="{ENV_REGEX_NS}/Robot/camera_link3/Camera/Camera1",
         offset=CameraCfg.OffsetCfg(pos=(0.0,0,0),rot=(0,1,0,0)),
         width=80,
         height=80,
