@@ -9,7 +9,7 @@ import random
 
 INSPECT_ROBOT_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path="/home/ubuntu/IsaacLabExtensionTemplate/exts/ext_template/ext_template/tasks/locomotion/velocity/config/duct_inspect_wtf/asset/inspect_robot_instanceable.usd",
+        usd_path="/home/ubuntu/IsaacLabExtensionTemplate/exts/ext_template/ext_template/tasks/locomotion/velocity/config/duct_inspect_wtf/asset/inspect_robot_flatten.usd",
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
@@ -34,12 +34,13 @@ INSPECT_ROBOT_CFG = ArticulationCfg(
     ),
     actuators={
         "wheels" : ImplicitActuatorCfg(
-            joint_names_expr=["rb_wheel", "lf_wheel", "rf_wheel", "lb_wheel"],
+            joint_names_expr=["rb_joint", "lf_joint", "rf_joint", "lb_joint"],
             effort_limit=3402823466385288598117041834845.0,
             velocity_limit= 10000000.0,
             stiffness=0,
             damping=1e5,
         )
+        "lift_joint" : 
     },
     soft_joint_pos_limit_factor=1.0,
 )

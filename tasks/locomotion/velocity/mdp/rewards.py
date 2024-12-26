@@ -125,7 +125,7 @@ def position_command_error_tanh_y(env: ManagerBasedRLEnv,
     cur_pos_y = robot.data.root_pos_w[:, 1]
     des_pos_b=command[:,:3]
     des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
-    distance = (des_pos_w[:,1]-0.027 - cur_pos_y).abs()  
+    distance = (des_pos_w[:,1] - cur_pos_y).abs()  
 
     return 1 - torch.tanh(distance / std)
 
