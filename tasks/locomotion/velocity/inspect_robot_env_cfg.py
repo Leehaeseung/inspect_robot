@@ -62,7 +62,7 @@ class InspectRobotbaseSceneCfg(InteractiveSceneCfg):
     
 
     #충돌센서(ductside에만 붙일거임)
-    contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/base_link",
+    contact_forces = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Robot/.*",
                                       filter_prim_paths_expr=["{ENV_REGEX_NS}/duct"],
                                       track_air_time=True,
                                       debug_vis=True)

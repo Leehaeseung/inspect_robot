@@ -16,13 +16,12 @@ INSPECT_ROBOT_CFG = ArticulationCfg(
             retain_accelerations=True,
             solver_velocity_iteration_count=16,
             solver_position_iteration_count=4,
-            max_depenetration_velocity=0.1,
+            max_depenetration_velocity=1.0,
         )
         ,
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-            enabled_self_collisions=False, solver_position_iteration_count=4, solver_velocity_iteration_count=2
-        ),
-        collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.0002, rest_offset=0.0)
+            articulation_enabled=True, enabled_self_collisions=False, solver_position_iteration_count=4, solver_velocity_iteration_count=2
+        )
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         joint_pos={
@@ -48,7 +47,14 @@ INSPECT_ROBOT_CFG = ArticulationCfg(
             stiffness=0,
             damping=1e5,
         ),
-        
+        "joints" : ImplicitActuatorCfg(
+        joint_names_expr=["lift_joint1","camera_joint2","camera_joint3"],
+        effort_limit=0.00,
+        velocity_limit=0.0,
+        stiffness=1e20,
+        damping=1e20,
+        friction=1e20,
+        )
     },
-    soft_joint_pos_limit_factor=1.0,
+    soft_joint_pos_limit_factor=0.9,
 )
