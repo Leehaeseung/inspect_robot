@@ -31,4 +31,4 @@ class InspectCameraEnvCfg(InspectRobotbaseSceneCfg):
 class InspectRGBCameraEnvCfg(InspectRobotDuctEnvCfg):
     """Configuration for the cartpole environment with RGB camera."""
 
-    scene: InspectRobotbaseSceneCfg = InspectCameraEnvCfg(num_envs=64, env_spacing=3)
+    scene: InspectRobotbaseSceneCfg = InspectCameraEnvCfg(num_envs=64, env_spacing=4)

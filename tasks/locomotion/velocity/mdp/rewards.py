@@ -73,6 +73,23 @@ def track_pos_x_exp(
     return torch.exp(-pos_x_error/std**2)
 
 
+def time_out_penalty(
+    env: ManagerBasedRLEnv ):
+    
+    return env.episode_length_buf >= env.max_episode_length-0.1
+
+def reach_goal_reward(
+    env: ManagerBasedRLEnv, 
+    threshold: float, 
+    command_name: str,    
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+):
+    robot:RigidObject=env.scene[robot_cfg.name]    # compute the error
+    command=env.command_manager.get_command(command_name)
+    des_pos_b=command[:,:3]
+    des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
+    pos_x_error = torch.square(des_pos_w[:,0] - robot.data.root_pos_w[:, 0])
+    return (pos_x_error<threshold)*(env.max_episode_length- env.episode_length_buf)
 
 
 

@@ -9,7 +9,7 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class InspectRGBPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 64
-    max_iterations = 5000
+    max_iterations = 50000
     save_interval = 50
     experiment_name = "InspectRobot"
     empirical_normalization = False
