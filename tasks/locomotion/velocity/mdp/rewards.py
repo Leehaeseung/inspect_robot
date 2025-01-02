@@ -89,7 +89,7 @@ def reach_goal_reward(
     des_pos_b=command[:,:3]
     des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
     pos_x_error = torch.square(des_pos_w[:,0] - robot.data.root_pos_w[:, 0])
-    return (pos_x_error<threshold)*(env.max_episode_length- env.episode_length_buf)
+    return (pos_x_error<threshold)*(env.max_episode_length- env.episode_length_buf+1)
 
 
 

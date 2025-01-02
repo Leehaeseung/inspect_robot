@@ -116,7 +116,7 @@ class ObservationsCfg:
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        joint_vel = ObsTerm(func=mdp.joint_vel)
         image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
         actions = ObsTerm(func=mdp.last_action)
         
@@ -161,18 +161,18 @@ class RewardsCfg:
     # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
-        weight=-2.0,
+        weight=-1.0,
         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names="base_link"), "threshold": 1.0},
     )
     
     reach_goal= RewTerm(
         func=mdp.reach_goal_reward,
-        weight=1.0,
+        weight= 1.0,
         params={"command_name":"base_position","threshold": 0.1},
     )
     time_out=RewTerm(
         func=mdp.time_out_penalty,
-        weight=-1.5,
+        weight=-0.5,
         )
     
     # orientation_tracking = RewTerm(
@@ -187,23 +187,23 @@ class RewardsCfg:
     # params={"std": 0.2, "command_name": "base_position"},
     # )
     # 초기 넓은 탐색 (큰 std, 높은 weight) 이게 x,y 커맨드 출력이 뭔지 모르겠네
-    position_tracking_fine_grained_3_0 = RewTerm(
+    position_tracking_fine_grained_2_5 = RewTerm(
         func=mdp.position_command_error_tanh_x,
-        weight=3.0,  # 높은 가중치로 초기 탐색 지원
-        params={"std": 3.0, "command_name": "base_position"},
+        weight=0.3,  # 높은 가중치로 초기 탐색 지원
+        params={"std": 2.5, "command_name": "base_position"},
     )
 
-    position_tracking_fine_grained_1_5 = RewTerm(
+    position_tracking_fine_grained_1_0 = RewTerm(
         func=mdp.position_command_error_tanh_x,
-        weight=1.8,  # 초기 탐색, 조금 더 낮은 가중치
-        params={"std": 1.5, "command_name": "base_position"},
+        weight=0.5,  # 초기 탐색, 조금 더 낮은 가중치
+        params={"std": 1.0, "command_name": "base_position"},
     )#완
 
     # 중간 범위 탐색 (중간 std, 중간 weight)
-    position_tracking_fine_grained_0_8 = RewTerm(
+    position_tracking_fine_grained_0_7 = RewTerm(
         func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 중간 가중치로 학습 안정화
-        params={"std": 1.0, "command_name": "base_position"},
+        weight=0.7,  # 중간 가중치로 학습 안정화
+        params={"std": 0.7, "command_name": "base_position"},
     )#완
     
     #y축 중간으로
@@ -214,16 +214,16 @@ class RewardsCfg:
     # )#완
 
     # 목표 근처 정밀 제어 (작은 std, 높은 weight)
-    position_tracking_fine_grained_0_4 = RewTerm(
+    position_tracking_fine_grained_0_5 = RewTerm(
         func=mdp.position_command_error_tanh_x,
-        weight=0.9,  # 정밀 제어에 적당한 가중치
-        params={"std": 0.8, "command_name": "base_position"},
+        weight=1.0,  # 정밀 제어에 적당한 가중치
+        params={"std": 0.5, "command_name": "base_position"},
     )
 
-    position_tracking_fine_grained_0_2 = RewTerm(
+    position_tracking_fine_grained_0_3 = RewTerm(
         func=mdp.position_command_error_tanh_x,
-        weight=0.7,  # 높은 가중치로 정밀 제어 강화
-        params={"std": 0.5, "command_name": "base_position"},
+        weight=1.0,  # 높은 가중치로 정밀 제어 강화
+        params={"std": 0.3, "command_name": "base_position"},
     )
 
     
@@ -241,7 +241,7 @@ class TerminationsCfg:
     
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     
-    reach_goal=DoneTerm(func=mdp.reach_goal_termination, params={"command_name":"base_position","threshold": 0.1})
+    reach_goal=DoneTerm(func=mdp.reach_goal_termination, params={"command_name":"base_position","threshold": 1.0})
         
     base_contact = DoneTerm(
         func=mdp.illegal_contact,
@@ -280,7 +280,7 @@ class InspectRobotDuctEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 4
-        self.episode_length_s = 8.0
+        self.episode_length_s = 15.0
         # simulation settings
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
