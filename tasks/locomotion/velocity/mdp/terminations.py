@@ -34,5 +34,5 @@ def reach_goal_termination(env: ManagerBasedRLEnv,
     command=env.command_manager.get_command(command_name)
     des_pos_b=command[:,:3]
     des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
-    pos_x_error = torch.square(des_pos_w[:,0] - robot.data.root_pos_w[:, 0])
+    pos_x_error = (des_pos_w[:,0] - robot.data.root_pos_w[:, 0]).abs()
     return (pos_x_error<threshold)
