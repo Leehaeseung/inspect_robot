@@ -49,7 +49,7 @@ INSPECT_ROBOT_CFG = ArticulationCfg(
         "wheels" : ImplicitActuatorCfg(
             joint_names_expr=["rb_joint", "lf_joint", "rf_joint", "lb_joint"],
             effort_limit=300000000000000000.0,
-            velocity_limit= 200.0,
+            velocity_limit= 150.0,
             stiffness=0,
             damping=1e5,
         ),

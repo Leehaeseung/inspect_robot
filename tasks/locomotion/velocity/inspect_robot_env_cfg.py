@@ -117,10 +117,10 @@ class ObservationsCfg:
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-        joint_vel = ObsTerm(func=mdp.joint_vel)
+   
         image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
         actions = ObsTerm(func=mdp.last_action)
-        
+        joint_vel = ObsTerm(func=mdp.joint_vel)
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -168,7 +168,7 @@ class RewardsCfg:
     
     reach_goal= RewTerm(
         func=mdp.reach_goal_reward,
-        weight=1.0,        
+        weight=10.0,        
         params={"command_name":"base_position","threshold": 0.1},
     )
     time_out=RewTerm(
@@ -234,7 +234,7 @@ class RewardsCfg:
     position_tracking_fine_grained_0_3 = RewTerm(
         func=mdp.position_command_error_tanh_x,
         weight=1.0,  # 높은 가중치로 정밀 제어 강화
-        params={"std": 0.3, "command_name": "base_position"},
+        params={"std": 0.4, "command_name": "base_position"},
     )
 
 
