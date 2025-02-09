@@ -118,7 +118,7 @@ class ObservationsCfg:
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
    
-        image = ObsTerm(func=mdp.image, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
+        image = ObsTerm(func=mdp.image_gray, params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"})
         actions = ObsTerm(func=mdp.last_action)
         joint_vel = ObsTerm(func=mdp.joint_vel)
 
@@ -143,7 +143,30 @@ class EventCfg:
             "asset_cfg": SceneEntityCfg("robot")
         }
     )
-
+    # startup
+    physics_material_robot = EventTerm(
+        func=mdp.randomize_rigid_body_material,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+            "static_friction_range": (0.4, 0.8),
+            "dynamic_friction_range": (0.3, 0.6),
+            "restitution_range": (0.0, 0.0),
+            "num_buckets": 64,
+        },
+    )
+    
+    physics_material_duct = EventTerm(
+        func=mdp.randomize_rigid_body_material,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("duct", body_names=".*"),
+            "static_friction_range": (0.4, 0.8),
+            "dynamic_friction_range": (0.3, 0.6),
+            "restitution_range": (0.0, 0.0),
+            "num_buckets": 64,
+        },    
+    )
 
 # 보상함수 설계 부분
 
@@ -162,19 +185,24 @@ class RewardsCfg:
     # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
-        weight=-2.0,
+        weight=-3.0,
         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names="base_link"), "threshold": 1.0},
     )
     
     reach_goal= RewTerm(
         func=mdp.reach_goal_reward,
-        weight=10.0,        
+        weight=1.0,        
         params={"command_name":"base_position","threshold": 0.1},
     )
     time_out=RewTerm(
         func=mdp.time_out_penalty,
-        weight=-0.5,
+        weight=-1.0,
         )
+    position_tracking_linear_2 = RewTerm(
+        func=mdp.position_command_error_linear_x,
+        weight=3.0,  # 높은 가중치로 초기 탐색 지원
+        params={"std": 2.0, "command_name": "base_position"},
+    )
     
     # orientation_tracking = RewTerm(
     #     func=mdp.heading_command_error_abs,
@@ -188,54 +216,54 @@ class RewardsCfg:
     # params={"std": 0.2, "command_name": "base_position"},
     # )
     # 초기 넓은 탐색 (큰 std, 높은 weight) 이게 x,y 커맨드 출력이 뭔지 모르겠네
-    position_tracking_fine_grained_2_5 = RewTerm(
-        func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 높은 가중치로 초기 탐색 지원
-        params={"std": 2.5, "command_name": "base_position"},
-    )
+    # position_tracking_fine_grained_2_5 = RewTerm(
+        # func=mdp.position_command_error_tanh_x,
+    #     weight=1.0,  # 높은 가중치로 초기 탐색 지원
+    #     params={"std": 2.5, "command_name": "base_position"},
+    # )
 
-    position_tracking_fine_grained_1_8 = RewTerm(
-        func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 초기 탐색, 조금 더 낮은 가중치
-        params={"std": 1.8, "command_name": "base_position"},
-    )#완
-
-    # 중간 범위 탐색 (중간 std, 중간 weight)
-    position_tracking_fine_grained_1_4 = RewTerm(
-        func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 중간 가중치로 학습 안정화
-        params={"std": 1.4, "command_name": "base_position"},
-    )#완
-    
-    #y축 중간으로
-    # position_tracking_fine_grained_0_8_y = RewTerm(
-    #     func=mdp.position_command_error_tanh_y,
-    #     weight=1.0,  # 중간 가중치로 학습 안정화
-    #     params={"std": 0.03, "command_name": "base_position"},
+    # position_tracking_fine_grained_1_8 = RewTerm(
+    #     func=mdp.position_command_error_tanh_x,
+    #     weight=1.0,  # 초기 탐색, 조금 더 낮은 가중치
+    #     params={"std": 1.8, "command_name": "base_position"},
     # )#완
 
-    # 목표 근처 정밀 제어 (작은 std, 높은 weight)
-    position_tracking_fine_grained_1_0 = RewTerm(
-        func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 정밀 제어에 적당한 가중치
-        params={"std": 1.0, "command_name": "base_position"},
-    )
+    # # 중간 범위 탐색 (중간 std, 중간 weight)
+    # position_tracking_fine_grained_1_4 = RewTerm(
+    #     func=mdp.position_command_error_tanh_x,
+    #     weight=1.0,  # 중간 가중치로 학습 안정화
+    #     params={"std": 1.4, "command_name": "base_position"},
+    # )#완
+    
+    # #y축 중간으로
+    # # position_tracking_fine_grained_0_8_y = RewTerm(
+    # #     func=mdp.position_command_error_tanh_y,
+    # #     weight=1.0,  # 중간 가중치로 학습 안정화
+    # #     params={"std": 0.03, "command_name": "base_position"},
+    # # )#완
 
-    position_tracking_fine_grained_0_7 = RewTerm(
-        func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 높은 가중치로 정밀 제어 강화
-        params={"std": 0.7, "command_name": "base_position"},
-    )
-    position_tracking_fine_grained_0_5 = RewTerm(
-        func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 높은 가중치로 정밀 제어 강화
-        params={"std": 0.5, "command_name": "base_position"},
-    )
-    position_tracking_fine_grained_0_3 = RewTerm(
-        func=mdp.position_command_error_tanh_x,
-        weight=1.0,  # 높은 가중치로 정밀 제어 강화
-        params={"std": 0.4, "command_name": "base_position"},
-    )
+    # # 목표 근처 정밀 제어 (작은 std, 높은 weight)
+    # position_tracking_fine_grained_1_0 = RewTerm(
+    #     func=mdp.position_command_error_tanh_x,
+    #     weight=1.0,  # 정밀 제어에 적당한 가중치
+    #     params={"std": 1.0, "command_name": "base_position"},
+    # )
+
+    # position_tracking_fine_grained_0_7 = RewTerm(
+    #     func=mdp.position_command_error_tanh_x,
+    #     weight=1.0,  # 높은 가중치로 정밀 제어 강화
+    #     params={"std": 0.7, "command_name": "base_position"},
+    # )
+    # position_tracking_fine_grained_0_5 = RewTerm(
+    #     func=mdp.position_command_error_tanh_x,
+    #     weight=1.0,  # 높은 가중치로 정밀 제어 강화
+    #     params={"std": 0.5, "command_name": "base_position"},
+    # )
+    # position_tracking_fine_grained_0_3 = RewTerm(
+    #     func=mdp.position_command_error_tanh_x,
+    #     weight=1.0,  # 높은 가중치로 정밀 제어 강화
+    #     params={"std": 0.4, "command_name": "base_position"},
+    # )
 
 
 

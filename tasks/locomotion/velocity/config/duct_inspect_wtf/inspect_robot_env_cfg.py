@@ -5,6 +5,7 @@ from omni.isaac.lab.managers import ObservationTermCfg as ObsTerm
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.sensors import CameraCfg
 import omni.isaac.lab_tasks.manager_based.classic.cartpole.mdp as mdp
+from omni.isaac.lab.sensors import TiledCameraCfg
 
 from ext_template.tasks.locomotion.velocity.inspect_robot_env_cfg import InspectRobotbaseSceneCfg, InspectRobotDuctEnvCfg
 
@@ -15,17 +16,17 @@ from omni.isaac.lab.sensors import ContactSensorCfg, patterns, CameraCfg
 
 @configclass
 class InspectCameraEnvCfg(InspectRobotbaseSceneCfg):
-    camera=CameraCfg(
-        # prim_path="{ENV_REGEX_NS}/Robot/base_link/Camera1",
+
+    camera: TiledCameraCfg = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/camera_link3/Camera/Camera1",
-        offset=CameraCfg.OffsetCfg(pos=(0.0,0,0),rot=(0,1,0,0)),
+        offset=TiledCameraCfg.OffsetCfg(pos=(0.0,0,0),rot=(0,1,0,0)),
+        data_types=["rgb"],
+        spawn=sim_utils.PinholeCameraCfg(
+            focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 20.0)
+        ),
         width=80,
         height=80,
-        spawn=sim_utils.PinholeCameraCfg(
-            focal_length=18.14, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.01, 10000000.0)
-        )
-    )    
-
+    )
     
 @configclass
 class InspectRGBCameraEnvCfg(InspectRobotDuctEnvCfg):
