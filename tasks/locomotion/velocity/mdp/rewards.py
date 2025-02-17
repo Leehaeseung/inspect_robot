@@ -4,7 +4,7 @@ import torch
 from typing import TYPE_CHECKING
 
 
-from omni.isaac.lab.assets import RigidObject
+from omni.isaac.lab.assets import RigidObject,Articulation
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.utils.math import combine_frame_transforms
 from omni.isaac.lab.managers import SceneEntityCfg
@@ -74,7 +74,8 @@ def track_pos_x_exp(
 
 
 def time_out_penalty(
-    env: ManagerBasedRLEnv ):
+    env: ManagerBasedRLEnv 
+    ):
     
     return env.episode_length_buf >= env.max_episode_length-0.1
 
@@ -149,21 +150,54 @@ def position_command_error_linear_x(env: ManagerBasedRLEnv,
 
 
 
-def position_command_error_tanh_y(env: ManagerBasedRLEnv,
-                                  std: float,
-                                  command_name: str,
-                                  robot_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-                                  ) -> torch.Tensor:
-    """Reward position tracking with tanh kernel."""
-    robot:RigidObject=env.scene[robot_cfg.name]    # compute the error
-    command = env.command_manager.get_command(command_name)
-    # des_pos_b = command[:, 1]
-    cur_pos_y = robot.data.root_pos_w[:, 1]
-    des_pos_b=command[:,:3]
-    des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
-    distance = (des_pos_w[:,1] - cur_pos_y).abs()  
 
-    return 1 - torch.tanh(distance / std)
+def orientation_tracking(
+    env: ManagerBasedRLEnv, 
+    std: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
+) -> torch.Tensor:
+    """Terminate when the asset's orientation is too far from the desired orientation limits.
+
+    This is computed by checking the angle between the projected gravity vector and the z-axis.
+    """
+    # extract the used quantities (to enable type-hinting)
+    asset: RigidObject = env.scene[asset_cfg.name]
+    
+    return 1- torch.tanh(torch.acos(-asset.data.projected_gravity_b[:, 2]).abs()/std)
+
+
+def joint_torques_l2_only_inspect_robot(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """Penalize joint torques applied on the articulation using L2 squared kernel.
+
+    NOTE: Only the joints configured in :attr:`asset_cfg.joint_ids` will have their joint torques contribute to the term.
+    """
+    # extract the used quantities (to enable type-hinting)
+    asset: Articulation = env.scene[asset_cfg.name]
+    return torch.sum(torch.square(asset.data.applied_torque[:, [0,1,4,5]]), dim=1)
+
+
+def root_height_below_minimum_penalty(
+    env: ManagerBasedRLEnv, minimum_height: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
+) -> torch.Tensor:
+    """Terminate when the asset's root height is below the minimum height.
+
+    Note:
+        This is currently only supported for flat terrains, i.e. the minimum height is in the world frame.
+    """
+    # extract the used quantities (to enable type-hinting)
+    asset: RigidObject = env.scene[asset_cfg.name]
+    return (asset.data.root_pos_w[:, 2] < minimum_height)
+
+def velocity_penalty(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):
+    asset: Articulation = env.scene[asset_cfg.name]
+    return torch.where(torch.abs(asset.data.joint_vel[:, [0,1,4,5]]) > 6.28, torch.square(asset.data.joint_vel[:, [0,1,4,5]]), 0.0).max(dim=1)[0]
+
+def vel_action_penalty(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):
+    asset: Articulation = env.scene[asset_cfg.name]
+    return torch.where(torch.abs(env.action_manager.action[:, [0,1]]) > 6.28, torch.square(env.action_manager.action[:, [0,1]]), 0.0).max(dim=1)[0]
+
+
+
 
 
 def position_command_error_tanh_y(env: ManagerBasedRLEnv,
@@ -198,16 +232,9 @@ def heading_command_error_abs(env: ManagerBasedRLEnv,
     
     return 1 - torch.tanh(heading_error / std )
 
-def orientation_tracking(
-    env: ManagerBasedRLEnv, 
-    std: float,
-    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-) -> torch.Tensor:
-    """Terminate when the asset's orientation is too far from the desired orientation limits.
 
-    This is computed by checking the angle between the projected gravity vector and the z-axis.
-    """
+def lin_vel_x(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-    
-    return 1- torch.tanh(torch.acos(-asset.data.projected_gravity_b[:, 2]).abs()/std)
+    penalty = torch.where(asset.data.root_lin_vel_w[:, 0] > 0.5, -50.0, 0.0)
+    return asset.data.root_lin_vel_w[:, 0]*20+penalty

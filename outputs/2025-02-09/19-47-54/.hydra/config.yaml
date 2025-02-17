@@ -1,0 +1,679 @@
+env:
+  viewer:
+    eye:
+    - 7.5
+    - 7.5
+    - 7.5
+    lookat:
+    - 0.0
+    - 0.0
+    - 0.0
+    cam_prim_path: /OmniverseKit_Persp
+    resolution:
+    - 1280
+    - 720
+    origin_type: world
+    env_index: 0
+    asset_name: null
+  sim:
+    physics_prim_path: /physicsScene
+    device: cuda:0
+    dt: 0.005
+    render_interval: 4
+    gravity:
+    - 0.0
+    - 0.0
+    - -9.81
+    enable_scene_query_support: false
+    use_fabric: true
+    disable_contact_processing: false
+    physx:
+      solver_type: 1
+      min_position_iteration_count: 1
+      max_position_iteration_count: 255
+      min_velocity_iteration_count: 0
+      max_velocity_iteration_count: 255
+      enable_ccd: false
+      enable_stabilization: true
+      enable_enhanced_determinism: false
+      bounce_threshold_velocity: 0.5
+      friction_offset_threshold: 0.04
+      friction_correlation_distance: 0.025
+      gpu_max_rigid_contact_count: 8388608
+      gpu_max_rigid_patch_count: 163840
+      gpu_found_lost_pairs_capacity: 2097152
+      gpu_found_lost_aggregate_pairs_capacity: 33554432
+      gpu_total_aggregate_pairs_capacity: 2097152
+      gpu_collision_stack_size: 67108864
+      gpu_heap_capacity: 67108864
+      gpu_temp_buffer_capacity: 16777216
+      gpu_max_num_partitions: 8
+      gpu_max_soft_body_contacts: 1048576
+      gpu_max_particle_contacts: 1048576
+    physics_material:
+      func: omni.isaac.lab.sim.spawners.materials.physics_materials:spawn_rigid_body_material
+      static_friction: 0.5
+      dynamic_friction: 0.5
+      restitution: 0.0
+      improve_patch_friction: true
+      friction_combine_mode: average
+      restitution_combine_mode: average
+      compliant_contact_stiffness: 0.0
+      compliant_contact_damping: 0.0
+    render:
+      enable_translucency: false
+      enable_reflections: false
+      enable_global_illumination: false
+      antialiasing_mode: DLSS
+      enable_dlssg: false
+      dlss_mode: 0
+      enable_direct_lighting: true
+      samples_per_pixel: 1
+      enable_shadows: true
+      enable_ambient_occlusion: false
+  ui_window_class_type: omni.isaac.lab.envs.ui.manager_based_rl_env_window:ManagerBasedRLEnvWindow
+  seed: null
+  decimation: 4
+  scene:
+    num_envs: 64
+    env_spacing: 4
+    lazy_sensor_update: true
+    replicate_physics: true
+    robot:
+      class_type: omni.isaac.lab.assets.articulation.articulation:Articulation
+      prim_path: '{ENV_REGEX_NS}/Robot'
+      spawn:
+        func: omni.isaac.lab.sim.spawners.from_files.from_files:spawn_from_usd
+        visible: true
+        semantic_tags: null
+        copy_from_source: true
+        mass_props: null
+        deformable_props: null
+        rigid_props:
+          rigid_body_enabled: null
+          kinematic_enabled: null
+          disable_gravity: false
+          linear_damping: null
+          angular_damping: null
+          max_linear_velocity: null
+          max_angular_velocity: null
+          max_depenetration_velocity: 1.0
+          max_contact_impulse: null
+          enable_gyroscopic_forces: null
+          retain_accelerations: true
+          solver_position_iteration_count: 4
+          solver_velocity_iteration_count: 16
+          sleep_threshold: null
+          stabilization_threshold: null
+        collision_props: null
+        activate_contact_sensors: true
+        scale: null
+        articulation_props:
+          articulation_enabled: true
+          enabled_self_collisions: false
+          solver_position_iteration_count: 4
+          solver_velocity_iteration_count: 16
+          sleep_threshold: null
+          stabilization_threshold: null
+          fix_root_link: null
+        fixed_tendons_props: null
+        joint_drive_props: null
+        visual_material_path: material
+        visual_material: null
+        usd_path: /home/ubuntu/IsaacLabExtensionTemplate/exts/ext_template/ext_template/tasks/locomotion/velocity/config/duct_inspect_wtf/asset/inspect_robot_flatten.usd
+        variants: null
+      init_state:
+        pos:
+        - 0.0
+        - 0.0
+        - 0.0
+        rot:
+        - 1.0
+        - 0.0
+        - 0.0
+        - 0.0
+        lin_vel:
+        - 0.0
+        - 0.0
+        - 0.0
+        ang_vel:
+        - 0.0
+        - 0.0
+        - 0.0
+        joint_pos:
+          rb_joint: 0.0
+          rf_joint: 0.0
+          lb_joint: 0.0
+          lf_joint: 0.0
+          lift_joint1: 0.0
+          lift_joint2: 0.0
+          lift_joint3: 0.0
+          camera_joint1: 0.0
+          camera_joint2: 0.0
+          camera_joint3: 0.0
+          liftt_assist_joint: 0.0
+        joint_vel:
+          rb_joint: 0.0
+          rf_joint: 0.0
+          lb_joint: 0.0
+          lf_joint: 0.0
+      collision_group: 0
+      debug_vis: false
+      soft_joint_pos_limit_factor: 0.9
+      actuators:
+        wheels:
+          class_type: omni.isaac.lab.actuators.actuator_pd:DCMotor
+          joint_names_expr:
+          - rb_joint
+          - lf_joint
+          - rf_joint
+          - lb_joint
+          effort_limit: 2.0
+          velocity_limit: 6.28
+          stiffness: 0
+          damping: 0.2
+          armature: null
+          friction: null
+          saturation_effort: 10.0
+        joints:
+          class_type: omni.isaac.lab.actuators.actuator_pd:ImplicitActuator
+          joint_names_expr:
+          - lift_joint1
+          - camera_joint2
+          - camera_joint3
+          effort_limit: 0.0
+          velocity_limit: 0.0
+          stiffness: 1.0e+20
+          damping: 1.0e+20
+          armature: null
+          friction: 1.0e+20
+    duct:
+      class_type: omni.isaac.lab.assets.rigid_object.rigid_object:RigidObject
+      prim_path: '{ENV_REGEX_NS}/duct'
+      spawn:
+        func: omni.isaac.lab.sim.spawners.from_files.from_files:spawn_from_usd
+        visible: true
+        semantic_tags: null
+        copy_from_source: true
+        mass_props: null
+        deformable_props: null
+        rigid_props:
+          rigid_body_enabled: true
+          kinematic_enabled: null
+          disable_gravity: true
+          linear_damping: null
+          angular_damping: null
+          max_linear_velocity: 0
+          max_angular_velocity: 0
+          max_depenetration_velocity: 1.0
+          max_contact_impulse: null
+          enable_gyroscopic_forces: null
+          retain_accelerations: null
+          solver_position_iteration_count: 16
+          solver_velocity_iteration_count: 0
+          sleep_threshold: null
+          stabilization_threshold: null
+        collision_props: null
+        activate_contact_sensors: false
+        scale:
+        - 0.01
+        - 0.01
+        - 0.01
+        articulation_props: null
+        fixed_tendons_props: null
+        joint_drive_props: null
+        visual_material_path: material
+        visual_material: null
+        usd_path: /home/ubuntu/IsaacLabExtensionTemplate/exts/ext_template/ext_template/tasks/locomotion/velocity/config/duct_inspect_wtf/asset/damper_winded.usd
+        variants: null
+      init_state:
+        pos:
+        - -0.2
+        - 0
+        - -0.072
+        rot:
+        - -0.7071
+        - 0
+        - 0
+        - 0.7071
+        lin_vel:
+        - 0.0
+        - 0.0
+        - 0.0
+        ang_vel:
+        - 0.0
+        - 0.0
+        - 0.0
+      collision_group: 0
+      debug_vis: false
+    contact_forces:
+      class_type: omni.isaac.lab.sensors.contact_sensor.contact_sensor:ContactSensor
+      prim_path: '{ENV_REGEX_NS}/Robot/.*'
+      update_period: 0.005
+      history_length: 0
+      debug_vis: true
+      track_pose: false
+      track_air_time: true
+      force_threshold: 1.0
+      filter_prim_paths_expr:
+      - '{ENV_REGEX_NS}/duct'
+      visualizer_cfg:
+        prim_path: /Visuals/ContactSensor
+        markers:
+          contact:
+            func: omni.isaac.lab.sim.spawners.shapes.shapes:spawn_sphere
+            visible: true
+            semantic_tags: null
+            copy_from_source: true
+            mass_props: null
+            rigid_props: null
+            collision_props: null
+            activate_contact_sensors: false
+            visual_material_path: material
+            visual_material:
+              func: omni.isaac.lab.sim.spawners.materials.visual_materials:spawn_preview_surface
+              diffuse_color:
+              - 1.0
+              - 0.0
+              - 0.0
+              emissive_color:
+              - 0.0
+              - 0.0
+              - 0.0
+              roughness: 0.5
+              metallic: 0.0
+              opacity: 1.0
+            physics_material_path: material
+            physics_material: null
+            radius: 0.02
+          no_contact:
+            func: omni.isaac.lab.sim.spawners.shapes.shapes:spawn_sphere
+            visible: false
+            semantic_tags: null
+            copy_from_source: true
+            mass_props: null
+            rigid_props: null
+            collision_props: null
+            activate_contact_sensors: false
+            visual_material_path: material
+            visual_material:
+              func: omni.isaac.lab.sim.spawners.materials.visual_materials:spawn_preview_surface
+              diffuse_color:
+              - 0.0
+              - 1.0
+              - 0.0
+              emissive_color:
+              - 0.0
+              - 0.0
+              - 0.0
+              roughness: 0.5
+              metallic: 0.0
+              opacity: 1.0
+            physics_material_path: material
+            physics_material: null
+            radius: 0.02
+    camera:
+      class_type: omni.isaac.lab.sensors.camera.tiled_camera:TiledCamera
+      prim_path: '{ENV_REGEX_NS}/Robot/camera_link3/Camera/Camera1'
+      update_period: 0.02
+      history_length: 0
+      debug_vis: false
+      offset:
+        pos:
+        - 0.0
+        - 0
+        - 0
+        rot:
+        - 0
+        - 1
+        - 0
+        - 0
+        convention: ros
+      spawn:
+        func: omni.isaac.lab.sim.spawners.sensors.sensors:spawn_camera
+        visible: true
+        semantic_tags: null
+        copy_from_source: true
+        projection_type: pinhole
+        clipping_range:
+        - 0.1
+        - 20.0
+        focal_length: 24.0
+        focus_distance: 400.0
+        f_stop: 0.0
+        horizontal_aperture: 20.955
+        vertical_aperture: null
+        horizontal_aperture_offset: 0.0
+        vertical_aperture_offset: 0.0
+        lock_camera: true
+      data_types:
+      - rgb
+      width: 80
+      height: 80
+      semantic_filter: '*:*'
+      colorize_semantic_segmentation: true
+      colorize_instance_id_segmentation: true
+      colorize_instance_segmentation: true
+      return_latest_camera_pose: false
+  observations:
+    policy:
+      concatenate_terms: true
+      enable_corruption: true
+      image:
+        func: ext_template.tasks.locomotion.velocity.mdp.observations:image_contour_debug
+        params:
+          sensor_cfg:
+            name: camera
+            joint_names: null
+            joint_ids: slice(None,None,None)
+            fixed_tendon_names: null
+            fixed_tendon_ids: slice(None,None,None)
+            body_names: null
+            body_ids: slice(None,None,None)
+            preserve_order: false
+          data_type: rgb
+        modifiers: null
+        noise: null
+        clip: null
+        scale: null
+      actions:
+        func: ext_template.tasks.locomotion.velocity.mdp.observations:last_action_debug
+        params: {}
+        modifiers: null
+        noise: null
+        clip: null
+        scale: null
+      joint_vel:
+        func: ext_template.tasks.locomotion.velocity.mdp.observations:joint_vel_debug
+        params: {}
+        modifiers: null
+        noise: null
+        clip: null
+        scale: null
+  actions:
+    wheel_velocity:
+      class_type: omni.isaac.lab.envs.mdp.actions.joint_actions:JointVelocityAction
+      asset_name: robot
+      debug_vis: false
+      joint_names:
+      - rb_joint
+      - lb_joint
+      scale: 1.0
+      offset: 0.0
+      preserve_order: false
+      use_default_offset: true
+  events:
+    reset_all:
+      func: omni.isaac.lab.envs.mdp.events:reset_scene_to_default
+      params: {}
+      mode: reset
+      interval_range_s: null
+      is_global_time: false
+      min_step_count_between_reset: 0
+    reset_base:
+      func: omni.isaac.lab.envs.mdp.events:reset_root_state_uniform
+      params:
+        pose_range:
+          yaw:
+          - 4.612
+          - 4.812
+        velocity_range: {}
+        asset_cfg:
+          name: robot
+          joint_names: null
+          joint_ids: slice(None,None,None)
+          fixed_tendon_names: null
+          fixed_tendon_ids: slice(None,None,None)
+          body_names: null
+          body_ids: slice(None,None,None)
+          preserve_order: false
+      mode: reset
+      interval_range_s: null
+      is_global_time: false
+      min_step_count_between_reset: 0
+    physics_material_robot:
+      func: omni.isaac.lab.envs.mdp.events:randomize_rigid_body_material
+      params:
+        asset_cfg:
+          name: robot
+          joint_names: null
+          joint_ids: slice(None,None,None)
+          fixed_tendon_names: null
+          fixed_tendon_ids: slice(None,None,None)
+          body_names: .*
+          body_ids: slice(None,None,None)
+          preserve_order: false
+        static_friction_range:
+        - 0.4
+        - 0.8
+        dynamic_friction_range:
+        - 0.3
+        - 0.6
+        restitution_range:
+        - 0.0
+        - 0.0
+        num_buckets: 64
+      mode: startup
+      interval_range_s: null
+      is_global_time: false
+      min_step_count_between_reset: 0
+    physics_material_duct:
+      func: omni.isaac.lab.envs.mdp.events:randomize_rigid_body_material
+      params:
+        asset_cfg:
+          name: duct
+          joint_names: null
+          joint_ids: slice(None,None,None)
+          fixed_tendon_names: null
+          fixed_tendon_ids: slice(None,None,None)
+          body_names: .*
+          body_ids: slice(None,None,None)
+          preserve_order: false
+        static_friction_range:
+        - 0.4
+        - 0.8
+        dynamic_friction_range:
+        - 0.3
+        - 0.6
+        restitution_range:
+        - 0.0
+        - 0.0
+        num_buckets: 64
+      mode: startup
+      interval_range_s: null
+      is_global_time: false
+      min_step_count_between_reset: 0
+  rerender_on_reset: false
+  is_finite_horizon: false
+  episode_length_s: 15.0
+  rewards:
+    undesired_contacts:
+      func: omni.isaac.lab.envs.mdp.rewards:undesired_contacts
+      params:
+        sensor_cfg:
+          name: contact_forces
+          joint_names: null
+          joint_ids: slice(None,None,None)
+          fixed_tendon_names: null
+          fixed_tendon_ids: slice(None,None,None)
+          body_names: base_link
+          body_ids: slice(None,None,None)
+          preserve_order: false
+        threshold: 1.0
+      weight: -3.0
+    reach_goal:
+      func: ext_template.tasks.locomotion.velocity.mdp.rewards:reach_goal_reward
+      params:
+        command_name: base_position
+        threshold: 0.1
+      weight: 1.0
+    time_out:
+      func: ext_template.tasks.locomotion.velocity.mdp.rewards:time_out_penalty
+      params: {}
+      weight: -1.0
+    position_tracking_linear_2:
+      func: ext_template.tasks.locomotion.velocity.mdp.rewards:position_command_error_linear_x
+      params:
+        std: 2.0
+        command_name: base_position
+      weight: 3.0
+    ang_vel_xy_l2:
+      func: omni.isaac.lab.envs.mdp.rewards:ang_vel_xy_l2
+      params: {}
+      weight: -0.05
+    dof_torques_l2:
+      func: ext_template.tasks.locomotion.velocity.mdp.rewards:joint_torques_l2_only_inspect_robot
+      params: {}
+      weight: -1.0e-05
+    dof_acc_l2:
+      func: omni.isaac.lab.envs.mdp.rewards:joint_acc_l2
+      params: {}
+      weight: -2.5e-07
+    action_rate_l2:
+      func: omni.isaac.lab.envs.mdp.rewards:action_rate_l2
+      params: {}
+      weight: -0.01
+  terminations:
+    robot_dropping:
+      func: omni.isaac.lab.envs.mdp.terminations:root_X_below_minimum
+      params:
+        minimum_height: -2.0
+        asset_cfg:
+          name: robot
+          joint_names: null
+          joint_ids: slice(None,None,None)
+          fixed_tendon_names: null
+          fixed_tendon_ids: slice(None,None,None)
+          body_names: null
+          body_ids: slice(None,None,None)
+          preserve_order: false
+      time_out: false
+    time_out:
+      func: omni.isaac.lab.envs.mdp.terminations:time_out
+      params: {}
+      time_out: true
+    reach_goal:
+      func: ext_template.tasks.locomotion.velocity.mdp.terminations:reach_goal_termination
+      params:
+        command_name: base_position
+        threshold: 0.1
+      time_out: false
+    base_contact:
+      func: omni.isaac.lab.envs.mdp.terminations:illegal_contact
+      params:
+        sensor_cfg:
+          name: contact_forces
+          joint_names: null
+          joint_ids: slice(None,None,None)
+          fixed_tendon_names: null
+          fixed_tendon_ids: slice(None,None,None)
+          body_names: base_link
+          body_ids: slice(None,None,None)
+          preserve_order: false
+        threshold: 1.0
+      time_out: false
+  curriculum: null
+  commands:
+    base_position:
+      class_type: omni.isaac.lab.envs.mdp.commands.pose_2d_command:UniformPose2dCommand
+      resampling_time_range:
+      - 15.0
+      - 15.0
+      debug_vis: false
+      asset_name: robot
+      simple_heading: false
+      ranges:
+        pos_x:
+        - 2.0
+        - 2.0
+        pos_y:
+        - 0.0
+        - 0.0
+        heading:
+        - 0
+        - 0
+      goal_pose_visualizer_cfg:
+        prim_path: /Visuals/Command/pose_goal
+        markers:
+          arrow:
+            func: omni.isaac.lab.sim.spawners.from_files.from_files:spawn_from_usd
+            visible: true
+            semantic_tags: null
+            copy_from_source: true
+            mass_props: null
+            deformable_props: null
+            rigid_props: null
+            collision_props: null
+            activate_contact_sensors: false
+            scale:
+            - 0.1
+            - 0.1
+            - 0.4
+            articulation_props: null
+            fixed_tendons_props: null
+            joint_drive_props: null
+            visual_material_path: material
+            visual_material:
+              func: omni.isaac.lab.sim.spawners.materials.visual_materials:spawn_preview_surface
+              diffuse_color:
+              - 0.0
+              - 1.0
+              - 0.0
+              emissive_color:
+              - 0.0
+              - 0.0
+              - 0.0
+              roughness: 0.5
+              metallic: 0.0
+              opacity: 1.0
+            usd_path: http://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.2/Isaac/Props/UIElements/arrow_x.usd
+            variants: null
+agent:
+  seed: 42
+  device: cuda:0
+  num_steps_per_env: 64
+  max_iterations: 50000
+  empirical_normalization: false
+  policy:
+    class_name: ActorCritic
+    init_noise_std: 0.2
+    actor_hidden_dims:
+    - 4096
+    - 1024
+    - 512
+    - 256
+    - 128
+    - 64
+    - 32
+    critic_hidden_dims:
+    - 4096
+    - 1024
+    - 512
+    - 256
+    - 128
+    - 64
+    - 32
+    activation: elu
+  algorithm:
+    class_name: PPO
+    value_loss_coef: 1.0
+    use_clipped_value_loss: true
+    clip_param: 0.25
+    entropy_coef: 0.01
+    num_learning_epochs: 10
+    num_mini_batches: 4
+    learning_rate: 0.01
+    schedule: adaptive
+    gamma: 0.99
+    lam: 0.95
+    desired_kl: 0.01
+    max_grad_norm: 1.0
+  save_interval: 200
+  experiment_name: InspectRobot
+  run_name: ''
+  logger: tensorboard
+  neptune_project: isaaclab
+  wandb_project: isaaclab
+  resume: false
+  load_run: .*
+  load_checkpoint: model_.*.pt

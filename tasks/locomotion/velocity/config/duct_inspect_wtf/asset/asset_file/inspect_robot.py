@@ -21,7 +21,7 @@ INSPECT_ROBOT_CFG = ArticulationCfg(
         )
         ,
         articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-            articulation_enabled=True, enabled_self_collisions=False, solver_position_iteration_count=4, solver_velocity_iteration_count=2
+            articulation_enabled=True, enabled_self_collisions=False, solver_position_iteration_count=4, solver_velocity_iteration_count=16
         )
     ),
     init_state=ArticulationCfg.InitialStateCfg(
@@ -40,18 +40,18 @@ INSPECT_ROBOT_CFG = ArticulationCfg(
             
         },
         joint_vel={
-            "rb_joint" :-20.0,
-            "rf_joint" :-20.0,
-            "lb_joint" :-20.0,
-            "lf_joint" :-20.0,}
+            "rb_joint" :-0.0,
+            "rf_joint" :0.0,
+            "lb_joint" :0.0,
+            "lf_joint" :0.0,}
     ),
     actuators={
         "wheels" : ImplicitActuatorCfg(
             joint_names_expr=["rb_joint", "lf_joint", "rf_joint", "lb_joint"],
-            effort_limit=300000000000000000.0,
-            velocity_limit= 150.0,
+            effort_limit=3.0,
+            velocity_limit= 6.28,
             stiffness=0,
-            damping=1e5,
+            damping=2.0,
         ),
         "joints" : ImplicitActuatorCfg(
         joint_names_expr=["lift_joint1","camera_joint2","camera_joint3"],
