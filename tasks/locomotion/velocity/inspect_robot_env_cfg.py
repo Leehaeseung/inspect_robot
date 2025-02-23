@@ -119,7 +119,7 @@ class ObservationsCfg:
         """Observations for policy group."""
    
         # image = ObsTerm(func=mdp.image_line_debug_latest,params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb","print_debug":False})
-        image = ObsTerm(func=mdp.image_features_gray ,params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb","model_name":"resnet18"})
+        image = ObsTerm(func=mdp.image_line_detection,params={"sensor_cfg": SceneEntityCfg("camera"), "data_type": "rgb"}) #"model_name":"resnet18"
         actions = ObsTerm(func=mdp.last_action_debug,params={"print_debug":True})
         joint_vel = ObsTerm(func=mdp.joint_vel_debug,params={"print_debug":True})
 
@@ -176,27 +176,27 @@ class RewardsCfg:
 
     undesired_contacts = RewTerm(
         func=mdp.undesired_contacts,
-        weight=-3.0,
+        weight=-100.0,
         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names="base_link"), "threshold": 1.0},
     )
     
     reach_goal= RewTerm(
         func=mdp.reach_goal_reward,
-        weight=3.0,        
+        weight=1.0,        
         params={"command_name":"base_position","threshold": 0.1},
     )
 
     time_out=RewTerm(
         func=mdp.time_out_penalty,
-        weight=-3.0,
+        weight=-1.0,
         )
     velocity_world_x= RewTerm(
         func=mdp.lin_vel_x,
-        weight=1.0,  # 높은 가중치로 초기 탐색 지원
+        weight=0.2,  # 높은 가중치로 초기 탐색 지원
         
     )
-    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-10)
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
+    dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-12)
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-6)
     velocity_penalty = RewTerm(func=mdp.velocity_penalty,weight=-0.001)#현재 바퀴 속도가 6.28rad/s 이상이면 페널티
     action_penalty=RewTerm(func=mdp.vel_action_penalty,weight=-0.001)#신경망의 출력이  6.28이상이면 페널티
     robot_dropping = RewTerm(
@@ -242,7 +242,7 @@ class RewardsCfg:
     # #     params={"std": 0.03, "command_name": "base_position"},
     # # )#완
 
-    # # 목표 근처 정밀 제어 (작은 std, 높은 weight)
+    # # 목표 근처 정밀 제어 (작은 std, 높은 weight) tensorboard --logdir logs/rsl_rl/InspectRobot/2025-02-1
     # position_tracking_fine_grained_1_0 = RewTerm(
     #     func=mdp.position_command_error_tanh_x,
     #     weight=1.0,  # 정밀 제어에 적당한 가중치
@@ -273,7 +273,7 @@ class RewardsCfg:
 class TerminationsCfg:
     """Termination terms for the MDP."""
     robot_dropping = DoneTerm(
-        func=mdp.root_X_below_minimum, params={"minimum_height": -0.5,"asset_cfg": SceneEntityCfg("robot")}
+        func=mdp.root_Z_below_minimum, params={"minimum_height": -0.5,"asset_cfg": SceneEntityCfg("robot")}
     )
     
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
@@ -295,10 +295,13 @@ class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
     contact_rate1 = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "undesired_contacts", "weight": -1.5, "num_steps": 2000}
+        func=mdp.modify_reward_weight, params={"term_name": "undesired_contacts", "weight": -400.0, "num_steps": 2000}
     )
     contact_rate2 = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "undesired_contacts", "weight": -2.0, "num_steps": 4000}
+        func=mdp.modify_reward_weight, params={"term_name": "undesired_contacts", "weight": -1000.0, "num_steps": 4000}
+    )
+    contact_rate2 = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "undesired_contacts", "weight": -4000.0, "num_steps": 6000}
     )
     goal_rate = CurrTerm(
     func=mdp.modify_reward_weight, params={"term_name": "time_out", "weight": -2.0 , "num_steps": 1000}

@@ -86,7 +86,7 @@ def reach_goal_reward(
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ):
     robot:RigidObject=env.scene[robot_cfg.name]    # compute the error
-    command=env.command_manager.get_command(command_name)
+    command=env.command_manager.get_command(command_name) #command는 항상 일정한 위치(로봇 위치에 따라 일정 위치에 고정되게끔 command함수가 정의되어있음)
     des_pos_b=command[:,:3]
     des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
     pos_x_error = torch.square(des_pos_w[:,0] - robot.data.root_pos_w[:, 0])
@@ -236,5 +236,5 @@ def heading_command_error_abs(env: ManagerBasedRLEnv,
 def lin_vel_x(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-    penalty = torch.where(asset.data.root_lin_vel_w[:, 0] > 0.5, -50.0, 0.0)
+    penalty = torch.where(asset.data.root_lin_vel_w[:, 0] < -0.1, -20.0, 0.0)
     return asset.data.root_lin_vel_w[:, 0]*20+penalty

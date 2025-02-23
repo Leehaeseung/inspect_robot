@@ -13,7 +13,8 @@ from omni.isaac.lab.sensors import Camera, Imu, RayCaster, RayCasterCamera, Tile
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedEnv, ManagerBasedRLEnv
-
+import os
+from collections import deque
 
 # from collections import deque
 # import numpy as np
@@ -117,12 +118,6 @@ if TYPE_CHECKING:
 #     # 그 외 타입은 그냥 반환
 #     return images
 
-import numpy as np
-import cv2
-import os
-import torch
-from collections import deque
-
 # 64개 환경마다 최근 28프레임을 저장
 frame_queues = [deque(maxlen=28) for _ in range(64)]
 
@@ -131,7 +126,7 @@ def image_line_debug_latest(
     sensor_cfg: SceneEntityCfg = SceneEntityCfg("tiled_camera"),
     data_type: str = "rgb",
     normalize: bool = True,
-    max_edges: int = 30,
+    max_edges: int = 100,
     print_debug: bool = True  # 🔹 추가: 디버그 출력 제어
 ) -> torch.Tensor:
     """
@@ -292,7 +287,7 @@ def last_action_debug(env: ManagerBasedEnv, action_name: str | None = None, prin
     """
     if action_name is None:
         if print_debug:
-            os.system('clear' if os.name == 'posix' else 'cls')
+            # os.system('clear' if os.name == 'posix' else 'cls')
             left_input = env.action_manager.action[0,0]
             right_input = env.action_manager.action[0,1]
             diff = abs(left_input - right_input)
@@ -304,18 +299,20 @@ def last_action_debug(env: ManagerBasedEnv, action_name: str | None = None, prin
         return env.action_manager.action
     else:
         return env.action_manager.get_term(action_name).raw_actions
-
-
+    
 import torch
-import cv2
 import numpy as np
+import cv2
+import os
 
-def image_gray(
+def image_line_detection(
     env: ManagerBasedEnv,
     sensor_cfg: SceneEntityCfg = SceneEntityCfg("tiled_camera"),
     data_type: str = "rgb",
     convert_perspective_to_orthogonal: bool = False,
-    normalize: bool = True
+    normalize: bool = True,
+    max_edges: int = 100,  # 🔹 최대 검출할 선 개수
+    print_debug: bool = True  # 🔹 ASCII 디버깅 활성화 옵션
 ) -> torch.Tensor:
     sensor: TiledCamera | Camera | RayCasterCamera = env.scene.sensors[sensor_cfg.name]
     images = sensor.data.output[data_type]  
@@ -350,16 +347,167 @@ def image_gray(
         # 🔹 Canny Edge Detection
         edge_images = np.zeros_like(enhanced_images)
         for i in range(enhanced_images.shape[0]):
-            edge_images[i] = cv2.Canny(enhanced_images[i], 15, 35)
+            edge_images[i] = cv2.Canny(enhanced_images[i], 5, 35)
+
+        # 🔹 HoughLinesP 설정
+        rho = 1
+        theta = np.pi / 30
+        threshold = 10
+        min_line_length = 30
+        max_line_gap = 10
+
+        batch_size = edge_images.shape[0]
+        line_features_all = np.zeros((batch_size, max_edges * 4), dtype=np.float32)  # (batch, 30*4)
+
+        for i in range(batch_size):
+            lines = cv2.HoughLinesP(
+                edge_images[i], rho, theta, threshold,
+                minLineLength=min_line_length, maxLineGap=max_line_gap
+            )
+
+            frame_lines = []
+            if lines is not None:
+                lines = lines.reshape(-1, 4)  # (N, 4)
+
+                # 🔹 중심 x 좌표를 기준으로 정렬
+                sorted_lines = sorted(lines, key=lambda line: (line[0] + line[2]) / 2)
+
+                # 🔹 최대 max_edges 개만 선택
+                frame_lines = sorted_lines[:max_edges]
+
+            # 🔹 부족한 경우 (0,0,0,0) 채우기
+            if len(frame_lines) < max_edges:
+                frame_lines += [[0, 0, 0, 0]] * (max_edges - len(frame_lines))
+
+            line_features_all[i] = np.array(frame_lines, dtype=np.float32).flatten()
+
+        # 🔹 Tensor 변환 (batch, 30*4) → (batch, -1) 형태로 반환
+        line_tensor = torch.from_numpy(line_features_all).float().to(images.device)
+
+        # 🔹 ASCII 디버깅 추가 (print_debug=True일 때만)
+        if print_debug:
+            os.system('clear' if os.name == 'posix' else 'cls')
+            print("\n🖥️ RealTime Edge Debug (ASCII) - First Frame\n" + "="*40)
+
+            debug_img = np.zeros_like(edge_images[0])  # 검출된 선을 위한 빈 이미지
+
+            # 첫 번째 배치의 검출된 선을 그림
+            lines_0 = line_features_all[0].reshape(max_edges, 4)
+            for x1, y1, x2, y2 in lines_0:
+                if (x1, y1, x2, y2) != (0, 0, 0, 0):  # 패딩된 선 제외
+                    cv2.line(debug_img, (int(x1), int(y1)), (int(x2), int(y2)), 255, 1)
+
+            # ASCII 변환
+            debug_resized = cv2.resize(debug_img, (80, 40))  # 출력용 크기 조정
+            ascii_chars = ['.', '#']
+            ascii_img = '\n'.join(
+                ''.join(ascii_chars[1] if px > 0 else ascii_chars[0] for px in row)
+                for row in debug_resized
+            )
+            print(ascii_img)
+
+        return line_tensor  # (batch, -1) 형태의 선분 데이터 반환
+import torch
+import numpy as np
+import cv2
+import os
+
+def image_gray(
+    env: ManagerBasedEnv,
+    sensor_cfg: SceneEntityCfg = SceneEntityCfg("tiled_camera"),
+    data_type: str = "rgb",
+    convert_perspective_to_orthogonal: bool = False,
+    normalize: bool = True,
+    max_edges: int = 30,  # 🔹 최대 검출할 선 개수
+    print_debug: bool = True  # 🔹 ASCII 디버깅 활성화 옵션
+) -> torch.Tensor:
+    sensor: TiledCamera | Camera | RayCasterCamera = env.scene.sensors[sensor_cfg.name]
+    images = sensor.data.output[data_type]  
+
+    if (data_type == "distance_to_camera") and convert_perspective_to_orthogonal:
+        images = math_utils.orthogonalize_perspective_depth(images, sensor.data.intrinsic_matrices)
+
+    if normalize and data_type == "rgb":
+        images = images.float() / 255.0
+        mean_tensor = torch.mean(images, dim=(1, 2), keepdim=True)
+        images -= mean_tensor
+    elif "distance_to" in data_type or "depth" in data_type:
+        images[images == float("inf")] = 0
+
+    if data_type == "rgb":
+        img_np = images.cpu().numpy()
+
+        # 🔹 RGB 데이터 범위 조정 (0~255로 변환)
+        img_np = ((img_np + 1) * 127.5).astype(np.uint8)
+
+        # 🔹 RGB → Grayscale 변환
+        img_gray = np.zeros((img_np.shape[0], img_np.shape[1], img_np.shape[2]), dtype=np.uint8)
+        for i in range(img_np.shape[0]):
+            img_gray[i] = cv2.cvtColor(img_np[i], cv2.COLOR_RGB2GRAY)
+
+        # 🔹 CLAHE 적용
+        enhanced_images = np.zeros_like(img_gray)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        for i in range(img_gray.shape[0]):
+            enhanced_images[i] = clahe.apply(img_gray[i])
+
+        # 🔹 Canny Edge Detection
+        edge_images = np.zeros_like(enhanced_images)
+        for i in range(enhanced_images.shape[0]):
+            edge_images[i] = cv2.Canny(enhanced_images[i], 5, 30)
+
+        # 🔹 HoughLinesP 설정
+        rho = 1
+        theta = np.pi / 30
+        threshold = 10
+        min_line_length = 30
+        max_line_gap = 10
+
+        # 🔹 선분 검출 및 그리기
+        line_images = np.zeros_like(edge_images)  # (batch, height, width)
+        
+        for i in range(edge_images.shape[0]):
+            lines = cv2.HoughLinesP(
+                edge_images[i], rho, theta, threshold,
+                minLineLength=min_line_length, maxLineGap=max_line_gap
+            )
+
+            if lines is not None:
+                lines = lines.reshape(-1, 4)  # (N, 4)
+
+                # 🔹 중심 x 좌표를 기준으로 정렬
+                sorted_lines = sorted(lines, key=lambda line: (line[0] + line[2]) / 2)
+
+                # 🔹 최대 max_edges 개만 선택
+                sorted_lines = sorted_lines[:max_edges]
+
+                # 🔹 검출된 선을 이미지에 그리기
+                for x1, y1, x2, y2 in sorted_lines:
+                    cv2.line(line_images[i], (x1, y1), (x2, y2), 255, 1)
 
         # 🔹 **채널을 3개로 확장 (기존 형식 유지)**
-        edge_images = np.repeat(edge_images[:, :, :, np.newaxis], 3, axis=-1)  # (batch, height, width, 3)
+        line_images = np.repeat(line_images[:, :, :, np.newaxis], 3, axis=-1)  # (batch, height, width, 3)
 
         # 🔹 Tensor 변환 (기존 코드 유지)
-        contour_tensor = torch.from_numpy(edge_images).float() / 255.0
+        contour_tensor = torch.from_numpy(line_images).float() / 255.0
         contour_tensor = contour_tensor.to(images.device)
-        
-        return contour_tensor
+
+        # 🔹 ASCII 디버깅 추가 (print_debug=True일 때만)
+        if print_debug:
+            os.system('clear' if os.name == 'posix' else 'cls')
+            print("\n🖥️ RealTime Edge Debug (ASCII) - First Frame\n" + "="*40)
+
+            debug_img = line_images[0, :, :, 0]  # 첫 번째 환경의 선분 이미지 (단일 채널)
+            debug_resized = cv2.resize(debug_img, (80, 40))  # ASCII 출력용 크기 조정
+            ascii_chars = ['.', '#']
+
+            ascii_img = '\n'.join(
+                ''.join(ascii_chars[1] if px > 0 else ascii_chars[0] for px in row)
+                for row in debug_resized
+            )
+            print(ascii_img)
+
+        return contour_tensor  # (batch, height, width, 3) 형태의 선분 데이터 반환
 
 
 class image_features_gray(ManagerTermBase):
@@ -477,7 +625,9 @@ class image_features_gray(ManagerTermBase):
             sensor_cfg=sensor_cfg,
             data_type=data_type,
             convert_perspective_to_orthogonal=convert_perspective_to_orthogonal,
-            normalize=True,  # want this for training stability
+            normalize=True,
+            print_debug=True
+            # want this for training stability
         )
 
         image_device = images.device
