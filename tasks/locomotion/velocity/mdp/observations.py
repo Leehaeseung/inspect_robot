@@ -258,6 +258,71 @@ def image_line_debug_latest(
     return final_tensor
 
 
+def edge_detection_latest(
+    env: ManagerBasedEnv,
+    sensor_cfg: SceneEntityCfg = SceneEntityCfg("tiled_camera"),
+    data_type: str = "rgb",
+    normalize: bool = True,
+    print_debug: bool = True  # 🔹 디버깅 활성화 여부
+) -> torch.Tensor:
+    """
+    1) 64개 환경에서 최신 프레임 하나만 사용하여 엣지 검출
+    2) 환경 0의 첫 번째 프레임에 대해 ASCII 디버깅 수행 (조건: print_debug=True)
+    3) 최종적으로 각 환경별 엣지 데이터를 (64, -1) 형태의 텐서 반환
+    """
+
+    # 1) 센서에서 64개 환경의 RGB 프레임(320x320) 획득
+    sensor = env.scene.sensors[sensor_cfg.name]
+    images = sensor.data.output[data_type]  # (64, 320, 320, 3)
+
+    # RGB 정규화
+    if normalize and data_type == "rgb":
+        images = images.float() / 255.0
+        mean_tensor = torch.mean(images, dim=(1, 2), keepdim=True)
+        images -= mean_tensor
+
+    # [-1,1] 범위를 [0,255]로 변환 후 NumPy 변환
+    img_np = images.cpu().numpy()
+    img_np = ((img_np + 1) * 127.5).astype(np.uint8)  # (64, 320, 320, 3)
+
+    # 2) 그레이스케일 변환 및 Canny 엣지 검출
+    H, W = img_np.shape[1], img_np.shape[2]
+    gray_imgs = np.zeros((64, H, W), dtype=np.uint8)
+    edge_imgs = np.zeros_like(gray_imgs)
+
+    for i in range(64):
+        gray_imgs[i] = cv2.cvtColor(img_np[i], cv2.COLOR_RGB2GRAY)
+        edge_imgs[i] = cv2.Canny(gray_imgs[i], 5, 30)
+
+    # 3) 🔹 해상도를 80x80으로 다운샘플링
+    resized_edges = np.zeros((64, 80, 80), dtype=np.uint8)
+    for i in range(64):
+        resized_edges[i] = cv2.resize(edge_imgs[i], (80, 80), interpolation=cv2.INTER_AREA)
+
+    # 4) 🔹 터미널 ASCII 디버깅 (조건: print_debug=True)
+    if print_debug:
+        os.system('clear' if os.name == 'posix' else 'cls')
+        print("\n🖥️ RealTime Edge Debug (ASCII) - First Frame\n" + "="*40)
+
+        # 디버그용 ASCII 출력 (환경 0의 엣지맵)
+        debug_img = resized_edges[0]  # (80, 80)
+        debug_gray = cv2.cvtColor(np.stack([debug_img]*3, axis=-1), cv2.COLOR_BGR2GRAY)
+
+        # ASCII 변환
+        ascii_chars = ['.', '#']
+        ascii_img = '\n'.join(
+            ''.join(ascii_chars[1] if px > 0 else ascii_chars[0] for px in row)
+            for row in debug_gray
+        )
+        print(ascii_img)
+
+    # 5) 🔹 최종 (64, -1) 형태의 벡터로 변환 후 반환
+    final_tensor = torch.from_numpy(resized_edges).float().view(64, -1).to(images.device)  # 🚀 GPU로 변환
+    final_tensor = final_tensor / 255.0  # 정규화 (0~1)
+
+    return final_tensor  # (64, 6400)
+
+
 def joint_vel_debug(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"), print_debug: bool = True):
     """The joint velocities of the asset. If print_debug=True, prints them in terminal."""
     asset: Articulation = env.scene[asset_cfg.name]
@@ -312,7 +377,7 @@ def image_line_detection(
     convert_perspective_to_orthogonal: bool = False,
     normalize: bool = True,
     max_edges: int = 100,  # 🔹 최대 검출할 선 개수
-    print_debug: bool = True  # 🔹 ASCII 디버깅 활성화 옵션
+    print_debug: bool = False  # 🔹 ASCII 디버깅 활성화 옵션
 ) -> torch.Tensor:
     sensor: TiledCamera | Camera | RayCasterCamera = env.scene.sensors[sensor_cfg.name]
     images = sensor.data.output[data_type]  

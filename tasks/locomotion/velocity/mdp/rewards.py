@@ -236,5 +236,4 @@ def heading_command_error_abs(env: ManagerBasedRLEnv,
 def lin_vel_x(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-    penalty = torch.where(asset.data.root_lin_vel_w[:, 0] < -0.1, -20.0, 0.0)
-    return asset.data.root_lin_vel_w[:, 0]*20+penalty
+    return torch.clamp(asset.data.root_lin_vel_w[:, 0],0.3)*10
